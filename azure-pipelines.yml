@@ -1,0 +1,30 @@
+# azure-pipelines.yml
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  imageName: 'rzrmayur/fastapi-ci-demo'
+
+stages:
+- stage: BuildAndPush
+  jobs:
+  - job: Build
+    steps:
+    - checkout: self
+
+    - script: docker build -t $(imageName):$(Build.BuildId) .
+      displayName: 'Build Docker image'
+
+    - script: echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
+      env:
+        DOCKER_USERNAME: $(DOCKER_USERNAME)
+        DOCKER_PASSWORD: $(DOCKER_PASSWORD)
+      displayName: 'Login to Docker Hub'
+
+    - script: docker push $(imageName):$(Build.BuildId)
+      displayName: 'Push Docker image'
