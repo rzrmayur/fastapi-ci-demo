@@ -1,4 +1,3 @@
-# .github/workflows/build-and-deploy.yaml
 name: Build and Deploy to AKS
 
 on:
