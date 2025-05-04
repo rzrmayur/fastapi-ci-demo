@@ -9,37 +9,36 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    - name: Build Docker image
-      run: docker build -t rzrmayur/fastapi-ci-demo:${{ github.run_number }} .
+      - name: Build Docker image
+        run: docker build -t rzrmayur/fastapi-ci-demo:${{ github.run_number }} .
 
-    - name: Push Docker image
-      run: docker push rzrmayur/fastapi-ci-demo:${{ github.run_number }}
+      - name: Push Docker image
+        run: docker push rzrmayur/fastapi-ci-demo:${{ github.run_number }}
 
- deploy:
-  needs: build
-  runs-on: ubuntu-latest
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-  steps:
-  - name: Checkout code
-    uses: actions/checkout@v2
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  - name: Login to Azure
-    uses: azure/login@v1
-    with:
-      creds: '${{ secrets.AZURE_CREDENTIALS }}'
+      - name: Set AKS context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: 'your-resource-group'
+          cluster-name: 'your-aks-cluster'
 
-  - name: Set AKS context
-    uses: azure/aks-set-context@v3
-    with:
-      resource-group: 'your-resource-group'
-      cluster-name: 'your-aks-cluster'
-
-  - name: Deploy to AKS
-    run: |
-      kubectl set image deployment/fastapi-app fastapi=rzrmayur/fastapi-ci-demo:${{ github.run_number }}
-      kubectl rollout status deployment/fastapi-app
+      - name: Deploy to AKS
+        run: |
+          kubectl set image deployment/fastapi-app fastapi=rzrmayur/fastapi-ci-demo:${{ github.run_number }}
+          kubectl rollout status deployment/fastapi-app
