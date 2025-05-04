@@ -1,0 +1,43 @@
+# .github/workflows/build-and-deploy.yaml
+name: Build and Deploy to AKS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Build Docker image
+      run: docker build -t rzrmayur/fastapi-ci-demo:${{ github.run_number }} .
+
+    - name: Push Docker image
+      run: docker push rzrmayur/fastapi-ci-demo:${{ github.run_number }}
+
+  deploy:
+    needs: build  # runs only if 'build' job succeeds
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+
+    - uses: azure/aks-set-context@v3
+      with:
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'  # must be a JSON string
+        cluster-name: 'your-aks-cluster'
+        resource-group: 'your-resource-group'
+
+    - name: Deploy to AKS
+      run: |
+        kubectl set image deployment/fastapi-app fastapi=rzrmayur/fastapi-ci-demo:${{ github.run_number }}
+        kubectl rollout status deployment/fastapi-app
+
