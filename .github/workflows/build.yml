@@ -35,8 +35,8 @@ jobs:
       - name: Set AKS context
         uses: azure/aks-set-context@v3
         with:
-          resource-group: 'your-resource-group'
-          cluster-name: 'your-aks-cluster'
+          resource-group: 'aksworks'
+          cluster-name: 'nb7'
 
       - name: Deploy to AKS
         run: |
