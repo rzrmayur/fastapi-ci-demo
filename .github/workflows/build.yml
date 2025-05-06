@@ -19,26 +19,3 @@ jobs:
 
       - name: Push Docker image
         run: docker push rzrmayur/fastapi-ci-demo:${{ github.run_number }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Set AKS context
-        uses: azure/aks-set-context@v3
-        with:
-          resource-group: 'aksworks'
-          cluster-name: 'nb7'
-
-      - name: Deploy to AKS
-        run: |
-          kubectl set image deployment/fastapi-app fastapi=rzrmayur/fastapi-ci-demo:${{ github.run_number }}
-          kubectl rollout status deployment/fastapi-app
